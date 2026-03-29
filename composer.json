@@ -1,0 +1,49 @@
+{
+    "name": "crovver/crovver-php",
+    "description": "Official PHP SDK for the Crovver subscription management platform",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["crovver", "subscription", "billing", "saas", "payments", "sdk"],
+    "homepage": "https://github.com/crovver/crovver-php",
+    "readme": "README.md",
+    "authors": [
+        {
+            "name": "Crovver",
+            "email": "support@crovver.com",
+            "homepage": "https://crovver.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.12",
+        "pestphp/pest": "^3.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Crovver\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Crovver\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "analyse": "phpstan analyse src --level=8",
+        "check": ["@analyse", "@test"]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
