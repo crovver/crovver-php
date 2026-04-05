@@ -7,10 +7,10 @@ namespace Crovver\Types;
 class CreateCheckoutSessionRequest
 {
     public function __construct(
-        public readonly string $requestingUserId,
+        public readonly string $externalUserId,
         public readonly string $planId,
         public readonly ?string $provider = null,
-        public readonly ?string $requestingTenantId = null,
+        public readonly ?string $externalTenantId = null,
         public readonly ?string $userEmail = null,
         public readonly ?string $userName = null,
         public readonly ?string $successUrl = null,
@@ -24,10 +24,10 @@ class CreateCheckoutSessionRequest
     public function toArray(): array
     {
         return array_filter([
-            'requestingUserId'   => $this->requestingUserId,
-            'planId'             => $this->planId,
-            'provider'           => $this->provider,
-            'requestingTenantId' => $this->requestingTenantId,
+            'externalUserId'   => $this->externalUserId,
+            'planId'           => $this->planId,
+            'provider'         => $this->provider,
+            'externalTenantId' => $this->externalTenantId,
             'userEmail'          => $this->userEmail,
             'userName'           => $this->userName,
             'successUrl'         => $this->successUrl,
