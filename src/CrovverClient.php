@@ -10,6 +10,8 @@ use Crovver\Types\CreateCheckoutSessionResponse;
 use Crovver\Types\CreateTenantRequest;
 use Crovver\Types\CreateTenantResponse;
 use Crovver\Types\GetPlansResponse;
+use Crovver\Types\CancelSubscriptionResponse;
+use Crovver\Types\GetInvoicesResponse;
 use Crovver\Types\GetSubscriptionsResponse;
 use Crovver\Types\ProrationCheckoutResponse;
 use Crovver\Types\GetSupportedProvidersResponse;
@@ -77,6 +79,28 @@ class CrovverClient
     {
         $data = $this->get('/api/public/subscriptions', ['requestingEntityId' => $requestingEntityId], retry: true);
         return GetSubscriptionsResponse::fromArray($data);
+    }
+
+    public function cancelSubscription(
+        string $subscriptionId,
+        string $externalTenantId,
+        string $reason,
+        ?string $feedback = null,
+    ): CancelSubscriptionResponse {
+        $body = array_filter([
+            'externalTenantId' => $externalTenantId,
+            'reason'           => $reason,
+            'feedback'         => $feedback,
+        ], fn($v) => $v !== null && $v !== '');
+
+        $data = $this->post("/api/public/subscriptions/{$subscriptionId}/cancel", $body, retry: false);
+        return CancelSubscriptionResponse::fromArray($data);
+    }
+
+    public function getInvoices(string $externalTenantId): GetInvoicesResponse
+    {
+        $data = $this->get('/api/public/billing/invoices', ['externalTenantId' => $externalTenantId], retry: true);
+        return GetInvoicesResponse::fromArray($data);
     }
 
     // -------------------------------------------------------------------------
