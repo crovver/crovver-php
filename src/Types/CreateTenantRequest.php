@@ -9,7 +9,7 @@ class CreateTenantRequest
     public function __construct(
         public readonly string $externalTenantId,
         public readonly string $name,
-        public readonly string $ownerExternalUserId,
+        public readonly string $externalUserId,
         public readonly ?string $ownerEmail = null,
         public readonly ?string $ownerName = null,
         public readonly ?string $slug = null,
@@ -23,7 +23,7 @@ class CreateTenantRequest
         return array_filter([
             'externalTenantId'    => $this->externalTenantId,
             'name'                => $this->name,
-            'ownerExternalUserId' => $this->ownerExternalUserId,
+            'externalUserId'      => $this->externalUserId,
             'ownerEmail'          => $this->ownerEmail,
             'ownerName'           => $this->ownerName,
             'slug'                => $this->slug,

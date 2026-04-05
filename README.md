@@ -60,7 +60,7 @@ use Crovver\Types\CreateTenantRequest;
 $response = $client->createTenant(new CreateTenantRequest(
     externalTenantId: 'org_123',
     name: 'Acme Corp',
-    ownerExternalUserId: 'user_456',
+    externalUserId: 'user_456',
     ownerEmail: 'admin@acme.com',   // optional
     ownerName: 'Jane Doe',          // optional
     slug: 'acme-corp',              // optional
@@ -89,7 +89,7 @@ echo $response->organization['type']; // "b2b" or "d2c"
 | --------------------- | -------------- | -------- | ------------------------------- |
 | `externalTenantId`    | `string`       | Yes      | Your system's tenant identifier |
 | `name`                | `string`       | Yes      | Display name                    |
-| `ownerExternalUserId` | `string`       | Yes      | Owner's user ID in your system  |
+| `externalUserId`      | `string`       | Yes      | Owner's user ID in your system  |
 | `ownerEmail`          | `string\|null` | No       | Owner email                     |
 | `ownerName`           | `string\|null` | No       | Owner display name              |
 | `slug`                | `string\|null` | No       | URL-safe identifier             |
@@ -154,10 +154,10 @@ use Crovver\Types\CreateCheckoutSessionRequest;
 
 // B2B checkout (tenant + user)
 $response = $client->createCheckoutSession(new CreateCheckoutSessionRequest(
-    requestingUserId: 'user_456',
+    externalUserId: 'user_456',
     planId: 'plan_789',
     provider: 'stripe',
-    requestingTenantId: 'org_123',
+    externalTenantId: 'org_123',
     successUrl: 'https://app.example.com/success',
     cancelUrl: 'https://app.example.com/cancel',
 ));
@@ -167,7 +167,7 @@ exit;
 
 // D2C checkout (user only)
 $response = $client->createCheckoutSession(new CreateCheckoutSessionRequest(
-    requestingUserId: 'user_456',
+    externalUserId: 'user_456',
     planId: 'plan_789',
     provider: 'stripe',
     userEmail: 'user@example.com',
@@ -181,10 +181,10 @@ $response = $client->createCheckoutSession(new CreateCheckoutSessionRequest(
 
 | Parameter            | Type           | Required | Description                             |
 | -------------------- | -------------- | -------- | --------------------------------------- |
-| `requestingUserId`   | `string`       | Yes      | User initiating the checkout            |
+| `externalUserId`     | `string`       | Yes      | User initiating the checkout            |
 | `planId`             | `string`       | Yes      | Target plan ID                          |
 | `provider`           | `string`       | Yes      | Payment provider code (e.g. `"stripe"`) |
-| `requestingTenantId` | `string\|null` | No       | Tenant ID for B2B flows                 |
+| `externalTenantId`   | `string\|null` | No       | Tenant ID for B2B flows                 |
 | `userEmail`          | `string\|null` | No       | Pre-fill checkout email                 |
 | `userName`           | `string\|null` | No       | Pre-fill customer name                  |
 | `successUrl`         | `string\|null` | No       | Redirect after successful payment       |
