@@ -11,7 +11,7 @@ class GetInvoicesResponse
         public readonly array $invoices,
     ) {}
 
-    /** @param array<string, mixed> $data */
+    /** @param array<string|int, mixed> $data */
     public static function fromArray(array $data): self
     {
         $items = $data['invoices'] ?? (isset($data[0]) ? $data : []);
