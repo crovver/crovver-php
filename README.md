@@ -235,7 +235,7 @@ For seat-based plans, use proration checkout to upgrade capacity mid-cycle with 
 ```php
 // Preview and initiate a capacity upgrade
 $response = $client->createProrationCheckout(
-    requestingEntityId: 'org_123',
+    externalTenantId: 'org_123',
     newCapacity: 20,              // total seats after upgrade
     planId: 'plan_789',           // optional if only one active plan
     successUrl: 'https://app.example.com/success',
