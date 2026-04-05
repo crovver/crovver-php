@@ -141,26 +141,26 @@ class CrovverClient
      * After the user confirms the prorated charge, call this to get a payment
      * checkout URL. Capacity is upgraded after payment confirmation via webhook.
      *
-     * @param string      $requestingEntityId  External tenant ID
+     * @param string      $externalTenantId  External tenant ID
      * @param int         $newCapacity         Total seat count after upgrade
      * @param string|null $planId              Plan ID (required when tenant has multiple active plans)
      * @param string|null $successUrl          Redirect URL on successful payment
      * @param string|null $cancelUrl           Redirect URL on cancelled payment
      */
     public function createProrationCheckout(
-        string $requestingEntityId,
+        string $externalTenantId,
         int $newCapacity,
         ?string $planId = null,
         ?string $successUrl = null,
         ?string $cancelUrl = null,
     ): ProrationCheckoutResponse {
         $body = array_filter([
-            'requestingEntityId' => $requestingEntityId,
+            'externalTenantId' => $externalTenantId,
             'newCapacity'        => $newCapacity,
             'planId'             => $planId,
             'successUrl'         => $successUrl,
             'cancelUrl'          => $cancelUrl,
-        ], fn($v) => $v !== null);
+        ], fn($v) => $v !== null && $v !== '');
 
         $data = $this->post('/api/public/capacity/proration-checkout', $body, retry: false);
         return ProrationCheckoutResponse::fromArray($data);
