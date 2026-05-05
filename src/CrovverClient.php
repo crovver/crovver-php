@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Crovver;
 
+use Crovver\Types\AllocateSeatRequest;
+use Crovver\Types\AllocateSeatResponse;
+use Crovver\Types\GetSeatCountResponse;
 use Crovver\Types\CheckUsageLimitResponse;
 use Crovver\Types\CreateCheckoutSessionRequest;
 use Crovver\Types\CreateCheckoutSessionResponse;
@@ -153,6 +156,22 @@ class CrovverClient
         ], retry: true);
 
         return CheckUsageLimitResponse::fromArray($data);
+    }
+
+    // -------------------------------------------------------------------------
+    // Capacity Allocation
+    // -------------------------------------------------------------------------
+
+    public function allocateSeat(AllocateSeatRequest $request): AllocateSeatResponse
+    {
+        $data = $this->post('/api/public/capacity/allocate', $request->toArray(), retry: false);
+        return AllocateSeatResponse::fromArray($data);
+    }
+
+    public function getSeatCount(string $requestingEntityId): GetSeatCountResponse
+    {
+        $data = $this->post('/api/public/capacity/count', ['requestingEntityId' => $requestingEntityId], retry: true);
+        return GetSeatCountResponse::fromArray($data);
     }
 
     // -------------------------------------------------------------------------
