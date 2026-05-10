@@ -18,6 +18,8 @@ class CreateCheckoutSessionRequest
         /** @var array<string, mixed>|null */
         public readonly ?array $metadata = null,
         public readonly ?int $quantity = null,
+        /** ISO 4217 currency code, e.g. "USD", "NPR". Defaults to plan's primary currency. */
+        public readonly ?string $currency = null,
     ) {}
 
     /** @return array<string, mixed> */
@@ -28,12 +30,13 @@ class CreateCheckoutSessionRequest
             'planId'           => $this->planId,
             'provider'         => $this->provider,
             'externalTenantId' => $this->externalTenantId,
-            'userEmail'          => $this->userEmail,
-            'userName'           => $this->userName,
-            'successUrl'         => $this->successUrl,
-            'cancelUrl'          => $this->cancelUrl,
-            'metadata'           => $this->metadata,
-            'quantity'           => $this->quantity,
+            'userEmail'        => $this->userEmail,
+            'userName'         => $this->userName,
+            'successUrl'       => $this->successUrl,
+            'cancelUrl'        => $this->cancelUrl,
+            'metadata'         => $this->metadata,
+            'quantity'         => $this->quantity,
+            'currency'         => $this->currency,
         ], fn($v) => $v !== null);
     }
 }
