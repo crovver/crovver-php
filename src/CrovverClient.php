@@ -7,6 +7,7 @@ namespace Crovver;
 use Crovver\Types\AddonPurchaseResponse;
 use Crovver\Types\AllocateSeatRequest;
 use Crovver\Types\AllocateSeatResponse;
+use Crovver\Types\GetSeatCountResponse;
 use Crovver\Types\CheckUsageLimitResponse;
 use Crovver\Types\ConsumeResponse;
 use Crovver\Types\CreateCheckoutSessionRequest;
@@ -277,11 +278,11 @@ class CrovverClient
      */
     public function listAvailableAddons(string $externalTenantId): array
     {
-        return $this->get(
+        return array_values($this->get(
             '/api/public/tenants/' . rawurlencode($externalTenantId) . '/addons/available',
             [],
             retry: true
-        );
+        ));
     }
 
     /**
@@ -324,11 +325,11 @@ class CrovverClient
      */
     public function getActiveAddonCredits(string $externalTenantId): array
     {
-        return $this->get(
+        return array_values($this->get(
             '/api/public/tenants/' . rawurlencode($externalTenantId) . '/addons/active',
             [],
             retry: true
-        );
+        ));
     }
 
     // -------------------------------------------------------------------------
