@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Crovver;
 
+use Crovver\Types\AddonPurchaseResponse;
 use Crovver\Types\AllocateSeatRequest;
 use Crovver\Types\AllocateSeatResponse;
 use Crovver\Types\GetSeatCountResponse;
 use Crovver\Types\CheckUsageLimitResponse;
+use Crovver\Types\ConsumeResponse;
 use Crovver\Types\CreateCheckoutSessionRequest;
 use Crovver\Types\CreateCheckoutSessionResponse;
 use Crovver\Types\CreateTenantRequest;
@@ -130,7 +132,13 @@ class CrovverClient
         return (bool) ($data['canAccess'] ?? false);
     }
 
-    /** @param array<string, mixed> $metadata */
+    /**
+     * @deprecated Use getCreditsBalance() / consumeCredits() instead — recordUsage will be removed in a future release.
+     *             The credits system provides idempotency, pool balances, and consumption tracking
+     *             in one unified API. See: $client->consumeCredits(...)
+     *
+     * @param array<string, mixed> $metadata
+     */
     public function recordUsage(
         string $requestingEntityId,
         string $metric,
@@ -148,6 +156,11 @@ class CrovverClient
         return RecordUsageResponse::fromArray($data);
     }
 
+    /**
+     * @deprecated Use getCreditsBalance() instead — checkUsageLimit will be removed in a future release.
+     *             The credits system returns full pool balances with base + addon breakdowns.
+     *             See: $client->getCreditsBalance($externalTenantId)
+     */
     public function checkUsageLimit(string $requestingEntityId, string $metric): CheckUsageLimitResponse
     {
         $data = $this->post('/api/public/check-usage-limit', [
@@ -207,6 +220,116 @@ class CrovverClient
 
         $data = $this->post('/api/public/capacity/proration-checkout', $body, retry: false);
         return ProrationCheckoutResponse::fromArray($data);
+    }
+
+    // -------------------------------------------------------------------------
+    // Credits  (preferred — replaces recordUsage / checkUsageLimit)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Get credit pool balances for a tenant.
+     * Returns all pools (base + addon) with remaining, limit, and expiry info.
+     *
+     * Prefer this over the deprecated checkUsageLimit().
+     *
+     * @return array<string, mixed>  Keyed by pool_key, each value is a PoolBalance array
+     */
+    public function getCreditsBalance(string $externalTenantId): array
+    {
+        return $this->get('/api/public/credits/balance', ['tenantId' => $externalTenantId], retry: true);
+    }
+
+    /**
+     * Consume credits from a named pool. Idempotent — safe to retry with the
+     * same idempotencyKey; the second call returns the original result.
+     *
+     * Prefer this over the deprecated recordUsage().
+     *
+     * @param array<string, mixed>|null $metadata
+     */
+    public function consumeCredits(
+        string $tenantId,
+        string $poolKey,
+        int $amount,
+        string $idempotencyKey,
+        ?array $metadata = null,
+    ): ConsumeResponse {
+        $body = array_filter([
+            'tenantId'       => $tenantId,
+            'poolKey'        => $poolKey,
+            'amount'         => $amount,
+            'idempotencyKey' => $idempotencyKey,
+            'metadata'       => $metadata,
+        ], fn($v) => $v !== null);
+
+        $data = $this->post('/api/public/credits/consume', $body, retry: false);
+        return ConsumeResponse::fromArray($data);
+    }
+
+    // -------------------------------------------------------------------------
+    // Addons
+    // -------------------------------------------------------------------------
+
+    /**
+     * List addons available for purchase by a tenant, filtered to those with
+     * pricing in the tenant's subscription currency.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function listAvailableAddons(string $externalTenantId): array
+    {
+        return array_values($this->get(
+            '/api/public/tenants/' . rawurlencode($externalTenantId) . '/addons/available',
+            [],
+            retry: true
+        ));
+    }
+
+    /**
+     * Initiate an addon purchase checkout. Idempotent — passing the same
+     * idempotencyKey returns the original result without creating a duplicate.
+     *
+     * @param array<string, mixed>|null $metadata
+     */
+    public function purchaseAddon(
+        string $externalTenantId,
+        string $addonId,
+        string $currency,
+        string $idempotencyKey,
+        ?string $successUrl = null,
+        ?string $cancelUrl = null,
+        ?array $metadata = null,
+    ): AddonPurchaseResponse {
+        $body = array_filter([
+            'addonId'        => $addonId,
+            'currency'       => $currency,
+            'idempotencyKey' => $idempotencyKey,
+            'successUrl'     => $successUrl,
+            'cancelUrl'      => $cancelUrl,
+            'metadata'       => $metadata,
+        ], fn($v) => $v !== null);
+
+        $data = $this->post(
+            '/api/public/tenants/' . rawurlencode($externalTenantId) . '/addons/purchase',
+            $body,
+            retry: false
+        );
+        return AddonPurchaseResponse::fromArray($data);
+    }
+
+    /**
+     * Get addon credit balances for a tenant, grouped by pool_key.
+     * Only returns pools where addon credits are remaining (> 0).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getActiveAddonCredits(string $externalTenantId): array
+    {
+        return array_values($this->get(
+            '/api/public/tenants/' . rawurlencode($externalTenantId) . '/addons/active',
+            [],
+            retry: true
+        ));
     }
 
     // -------------------------------------------------------------------------
