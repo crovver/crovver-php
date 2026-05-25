@@ -17,7 +17,7 @@ class CreateCheckoutSessionRequest
         public readonly ?string $cancelUrl = null,
         /** @var array<string, mixed>|null */
         public readonly ?array $metadata = null,
-        public readonly ?int $quantity = null,
+        public readonly ?int $totalCapacityUnits = null,
         /** ISO 4217 currency code, e.g. "USD", "NPR". Defaults to plan's primary currency. */
         public readonly ?string $currency = null,
     ) {}
@@ -35,7 +35,7 @@ class CreateCheckoutSessionRequest
             'successUrl'       => $this->successUrl,
             'cancelUrl'        => $this->cancelUrl,
             'metadata'         => $this->metadata,
-            'quantity'         => $this->quantity,
+            'totalCapacityUnits' => $this->totalCapacityUnits,
             'currency'         => $this->currency,
         ], fn($v) => $v !== null);
     }
