@@ -7,12 +7,12 @@ namespace Crovver\Types;
 class AllocateSeatRequest
 {
     public function __construct(
-        public readonly string $requestingEntityId,
-        public readonly ?string $externalUserId = null,
+        public readonly string  $requestingEntityId,
+        public readonly string  $externalUserId,
         public readonly ?string $email = null,
         public readonly ?string $name = null,
         /** @var array<string, mixed>|null */
-        public readonly ?array $metadata = null,
+        public readonly ?array  $metadata = null,
     ) {}
 
     /** @return array<string, mixed> */
@@ -24,6 +24,6 @@ class AllocateSeatRequest
             'email'              => $this->email,
             'name'               => $this->name,
             'metadata'           => $this->metadata,
-        ], fn($v) => $v !== null);
+        ], fn($v) => $v !== null && $v !== '');
     }
 }

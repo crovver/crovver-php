@@ -13,12 +13,14 @@ class Plan
      * @param array<string, mixed>     $product
      * @param PaymentProviderMapping[] $paymentProviders
      * @param array<int, array{currency: string, amount: float|null, basePrice: float|null, perSeatPrice: float|null}> $prices
+     * @param CreditPool[]             $creditPools
      */
     public function __construct(
         public readonly string $id,
         public readonly string $name,
         public readonly PlanPricing $pricing,
         public readonly array $prices,
+        public readonly array $creditPools,
         public readonly array $trial,
         public readonly bool $testMode,
         public readonly bool $isFree,
@@ -41,6 +43,10 @@ class Plan
             name: $data['name'],
             pricing: PlanPricing::fromArray($data['pricing']),
             prices: $data['prices'] ?? [],
+            creditPools: array_map(
+                fn($c) => CreditPool::fromArray($c),
+                $data['credit_pools'] ?? $data['creditPools'] ?? []
+            ),
             trial: $data['trial'],
             testMode: $data['test_mode'],
             isFree: $data['isFree'] ?? $data['is_free'] ?? false,

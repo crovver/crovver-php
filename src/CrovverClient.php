@@ -7,6 +7,9 @@ namespace Crovver;
 use Crovver\Types\AddonPurchaseResponse;
 use Crovver\Types\AllocateSeatRequest;
 use Crovver\Types\AllocateSeatResponse;
+use Crovver\Types\BulkAllocateSeatsRequest;
+use Crovver\Types\BulkAllocateSeatsResponse;
+use Crovver\Types\GetAllocationsResponse;
 use Crovver\Types\GetSeatCountResponse;
 use Crovver\Types\CheckUsageLimitResponse;
 use Crovver\Types\ConsumeResponse;
@@ -179,6 +182,81 @@ class CrovverClient
     {
         $data = $this->post('/api/public/capacity/allocate', $request->toArray(), retry: false);
         return AllocateSeatResponse::fromArray($data);
+    }
+
+    /**
+     * Allocate multiple users to a tenant in one call.
+     *
+     * Users are inserted up to the subscription's current capacity_units.
+     * Users beyond that limit are returned in $response->rejected — no proration
+     * is triggered. Upgrade capacity first, then call this again.
+     *
+     * Already-active users are silently skipped (idempotent).
+     *
+     * @example
+     * ```php
+     * use Crovver\Types\BulkAllocateSeatsRequest;
+     * use Crovver\Types\BulkAllocateSeatUser;
+     *
+     * $result = $crovver->bulkAllocateSeats(new BulkAllocateSeatsRequest(
+     *     requestingEntityId: 'company-123',
+     *     users: [
+     *         new BulkAllocateSeatUser('user-1', 'alice@co.com', 'Alice'),
+     *         new BulkAllocateSeatUser('user-2', 'bob@co.com',   'Bob'),
+     *         new BulkAllocateSeatUser('user-3', 'carol@co.com', 'Carol'),
+     *     ],
+     * ));
+     *
+     * echo count($result->allocated) . ' allocated';
+     *
+     * if (count($result->rejected) > 0) {
+     *     // Capacity full — upgrade subscription, then retry
+     * }
+     * ```
+     */
+    public function bulkAllocateSeats(BulkAllocateSeatsRequest $request): BulkAllocateSeatsResponse
+    {
+        $data = $this->post('/api/public/capacity/bulk-allocate', $request->toArray(), retry: false);
+        return BulkAllocateSeatsResponse::fromArray($data);
+    }
+
+    /**
+     * List capacity allocations for a tenant.
+     *
+     * Returns the users allocated to the tenant's active subscription,
+     * along with a capacity summary and pagination metadata.
+     *
+     * @param string $requestingEntityId  External tenant ID
+     * @param string $status              'active' | 'removed' | 'all'  (default: 'active')
+     * @param int    $page                1-based page number            (default: 1)
+     * @param int    $limit               Page size, max 100             (default: 50)
+     *
+     * @example
+     * ```php
+     * // Active users, first page
+     * $result = $crovver->getAllocations('company-123');
+     * foreach ($result->allocations as $user) {
+     *     echo $user->externalUserId . ' — ' . $user->email;
+     * }
+     *
+     * // All users, page 2
+     * $page2 = $crovver->getAllocations('company-123', status: 'all', page: 2, limit: 25);
+     * echo $page2->pagination->total . ' total users';
+     * ```
+     */
+    public function getAllocations(
+        string $requestingEntityId,
+        string $status = 'active',
+        int    $page   = 1,
+        int    $limit  = 50,
+    ): GetAllocationsResponse {
+        $data = $this->get('/api/public/capacity/allocations', [
+            'requestingEntityId' => $requestingEntityId,
+            'status'             => $status,
+            'page'               => $page,
+            'limit'              => $limit,
+        ], retry: true);
+        return GetAllocationsResponse::fromArray($data);
     }
 
     public function getSeatCount(string $requestingEntityId): GetSeatCountResponse
