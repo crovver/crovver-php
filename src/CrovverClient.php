@@ -125,12 +125,17 @@ class CrovverClient
     // Entitlements
     // -------------------------------------------------------------------------
 
-    public function canAccess(string $requestingEntityId, string $featureKey): bool
+    public function canAccess(string $requestingEntityId, string $featureKey = '', ?string $productSlug = null): bool
     {
-        $data = $this->post('/api/public/can-access', [
-            'requestingEntityId' => $requestingEntityId,
-            'featureKey'         => $featureKey,
-        ], retry: true);
+        $payload = ['requestingEntityId' => $requestingEntityId];
+        if ($featureKey !== '') {
+            $payload['featureKey'] = $featureKey;
+        }
+        if ($productSlug !== null) {
+            $payload['productSlug'] = $productSlug;
+        }
+
+        $data = $this->post('/api/public/can-access', $payload, retry: true);
 
         return (bool) ($data['canAccess'] ?? false);
     }
@@ -146,13 +151,15 @@ class CrovverClient
         string $requestingEntityId,
         string $metric,
         int $value = 1,
-        array $metadata = []
+        array $metadata = [],
+        ?string $productSlug = null
     ): RecordUsageResponse {
         $body = array_filter([
             'requestingEntityId' => $requestingEntityId,
             'metric'             => $metric,
             'value'              => $value,
             'metadata'           => $metadata ?: null,
+            'productSlug'        => $productSlug,
         ], fn($v) => $v !== null);
 
         $data = $this->post('/api/public/record-usage', $body, retry: true);
@@ -164,12 +171,15 @@ class CrovverClient
      *             The credits system returns full pool balances with base + addon breakdowns.
      *             See: $client->getCreditsBalance($externalTenantId)
      */
-    public function checkUsageLimit(string $requestingEntityId, string $metric): CheckUsageLimitResponse
+    public function checkUsageLimit(string $requestingEntityId, string $metric, ?string $productSlug = null): CheckUsageLimitResponse
     {
-        $data = $this->post('/api/public/check-usage-limit', [
+        $body = array_filter([
             'requestingEntityId' => $requestingEntityId,
             'metric'             => $metric,
-        ], retry: true);
+            'productSlug'        => $productSlug,
+        ], fn($v) => $v !== null);
+
+        $data = $this->post('/api/public/check-usage-limit', $body, retry: true);
 
         return CheckUsageLimitResponse::fromArray($data);
     }
