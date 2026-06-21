@@ -322,9 +322,13 @@ class CrovverClient
      *
      * @return array<string, mixed>  Keyed by pool_key, each value is a PoolBalance array
      */
-    public function getCreditsBalance(string $externalTenantId): array
+    public function getCreditsBalance(string $externalTenantId, ?string $subscriptionId = null): array
     {
-        return $this->get('/api/public/credits/balance', ['tenantId' => $externalTenantId], retry: true);
+        $params = ['tenantId' => $externalTenantId];
+        if ($subscriptionId !== null) {
+            $params['subscriptionId'] = $subscriptionId;
+        }
+        return $this->get('/api/public/credits/balance', $params, retry: true);
     }
 
     /**
@@ -341,6 +345,7 @@ class CrovverClient
         int $amount,
         string $idempotencyKey,
         ?array $metadata = null,
+        ?string $subscriptionId = null,
     ): ConsumeResponse {
         $body = array_filter([
             'tenantId'       => $tenantId,
@@ -348,6 +353,7 @@ class CrovverClient
             'amount'         => $amount,
             'idempotencyKey' => $idempotencyKey,
             'metadata'       => $metadata,
+            'subscriptionId' => $subscriptionId,
         ], fn($v) => $v !== null);
 
         $data = $this->post('/api/public/credits/consume', $body, retry: false);
@@ -384,6 +390,7 @@ class CrovverClient
         string $addonId,
         string $currency,
         string $idempotencyKey,
+        ?int $qty = null,
         ?string $successUrl = null,
         ?string $cancelUrl = null,
         ?array $metadata = null,
@@ -392,6 +399,7 @@ class CrovverClient
             'addonId'        => $addonId,
             'currency'       => $currency,
             'idempotencyKey' => $idempotencyKey,
+            'qty'            => $qty,
             'successUrl'     => $successUrl,
             'cancelUrl'      => $cancelUrl,
             'metadata'       => $metadata,
@@ -411,11 +419,12 @@ class CrovverClient
      *
      * @return array<int, array<string, mixed>>
      */
-    public function getActiveAddonCredits(string $externalTenantId): array
+    public function getActiveAddonCredits(string $externalTenantId, ?string $subscriptionId = null): array
     {
+        $params = $subscriptionId !== null ? ['subscriptionId' => $subscriptionId] : [];
         return array_values($this->get(
             '/api/public/tenants/' . rawurlencode($externalTenantId) . '/addons/active',
-            [],
+            $params,
             retry: true
         ));
     }
