@@ -322,11 +322,17 @@ class CrovverClient
      *
      * @return array<string, mixed>  Keyed by pool_key, each value is a PoolBalance array
      */
-    public function getCreditsBalance(string $externalTenantId, ?string $subscriptionId = null): array
-    {
+    public function getCreditsBalance(
+        string $externalTenantId,
+        ?string $subscriptionId = null,
+        ?string $productSlug = null,
+    ): array {
         $params = ['tenantId' => $externalTenantId];
         if ($subscriptionId !== null) {
             $params['subscriptionId'] = $subscriptionId;
+        }
+        if ($productSlug !== null) {
+            $params['productSlug'] = $productSlug;
         }
         return $this->get('/api/public/credits/balance', $params, retry: true);
     }
@@ -346,6 +352,7 @@ class CrovverClient
         string $idempotencyKey,
         ?array $metadata = null,
         ?string $subscriptionId = null,
+        ?string $productSlug = null,
     ): ConsumeResponse {
         $body = array_filter([
             'tenantId'       => $tenantId,
@@ -354,6 +361,7 @@ class CrovverClient
             'idempotencyKey' => $idempotencyKey,
             'metadata'       => $metadata,
             'subscriptionId' => $subscriptionId,
+            'productSlug'    => $productSlug,
         ], fn($v) => $v !== null);
 
         $data = $this->post('/api/public/credits/consume', $body, retry: false);
