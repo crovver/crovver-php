@@ -80,14 +80,14 @@ foreach ($response->members as $member) {
     echo $member->externalUserId . ' — ' . $member->role;
     echo $member->email;
 }
-echo $response->organization['type']; // "b2b" or "d2c"
+echo $response->organization['name'];
 ```
 
 **`CreateTenantRequest` parameters:**
 
 | Parameter             | Type           | Required | Description                     |
 | --------------------- | -------------- | -------- | ------------------------------- |
-| `externalTenantId`    | `string`       | Yes      | Your system's tenant identifier |
+| `externalTenantId`    | `string\|null` | Yes      | Your workspace ID (B2B); `null` for an individual (D2C) customer, keyed on `externalUserId` |
 | `name`                | `string`       | Yes      | Display name                    |
 | `externalUserId`      | `string`       | Yes      | Owner's user ID in your system  |
 | `ownerEmail`          | `string\|null` | No       | Owner email                     |
