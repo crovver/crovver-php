@@ -204,28 +204,6 @@ if ($client->canAccess('org_123', 'export_csv')) {
 }
 ```
 
-#### Metered usage
-
-```php
-// Record usage (defaults to incrementing by 1)
-$client->recordUsage('org_123', 'api_calls');
-$client->recordUsage('org_123', 'api_calls', 10);
-$client->recordUsage('org_123', 'storage_gb', 5, ['source' => 'file_upload']);
-
-// Check against plan limits
-$usage = $client->checkUsageLimit('org_123', 'api_calls');
-
-echo $usage->current;     // current usage count
-echo $usage->limit;       // plan limit (null = unlimited)
-echo $usage->remaining;   // remaining before limit
-echo $usage->percentage;  // 0–100 (null if unlimited)
-echo $usage->allowed;     // false if limit exceeded
-
-if (!$usage->allowed) {
-    // block the action or prompt upgrade
-}
-```
-
 ---
 
 ### Seat-based Proration

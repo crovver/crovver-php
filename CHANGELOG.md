@@ -1,9 +1,14 @@
 # Changelog
 
-## [Unreleased]
+## [2.0.0] - Unreleased
 
-Release only after the Crovver server release that ships per-product customer types — an older server rejects a D2C
-`createTenant`.
+The SDK for the revamped Crovver server. Release only after that server release: an older server rejects a D2C
+`createTenant` and sends no `seatTiers`. Packagist takes the version from the `v2.0.0` tag.
+
+### Removed (breaking)
+- `recordUsage()` and `RecordUsageResponse`. The server's usage-events route is deprecated and nothing reads what it
+  writes; consume credit pools with `consumeCredits()`.
+- `checkUsageLimit()` and `CheckUsageLimitResponse`; read pool balances with `getCreditsBalance()`.
 
 ### Changed
 - `CreateTenantRequest::$externalTenantId` is nullable: pass `null` to create an individual (D2C) customer keyed on
