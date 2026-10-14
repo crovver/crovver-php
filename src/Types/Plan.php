@@ -14,6 +14,7 @@ class Plan
      * @param PaymentProviderMapping[] $paymentProviders
      * @param array<int, array{currency: string, amount: float|null, basePrice: float|null, perSeatPrice: float|null}> $prices
      * @param CreditPool[]             $creditPools
+     * @param PlanSeatTier[]           $seatTiers   Every currency's bands; empty unless the plan is tiered
      */
     public function __construct(
         public readonly string $id,
@@ -33,6 +34,7 @@ class Plan
         public readonly ?string $updatedAt,
         public readonly ?bool $isActive = null,
         public readonly ?string $description = null,
+        public readonly array $seatTiers = [],
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -62,6 +64,41 @@ class Plan
             updatedAt: $data['updatedAt'] ?? $data['updated_at'] ?? null,
             isActive: $data['isActive'] ?? $data['is_active'] ?? null,
             description: $data['description'] ?? null,
+            seatTiers: PlanSeatTier::listFromArray($data['seatTiers'] ?? []),
         );
+    }
+
+    /**
+     * One billing period's price at a seat count, by the rules Crovver charges: free is 0; a tiered
+     * plan is the price of the band holding $seats (null when no band does — that count cannot be
+     * purchased); another seat-based plan is basePrice + max(0, seats - includedSeats) * perSeatPrice;
+     * a flat plan is its amount. Null too when the plan has no price in $currency.
+     */
+    public function periodCharge(int $seats, ?string $currency = null): ?float
+    {
+        if ($this->isFree) {
+            return 0.0;
+        }
+        $cur = strtoupper($currency ?? $this->pricing->currency);
+        $ladder = array_values(array_filter($this->seatTiers, fn(PlanSeatTier $t) => strtoupper($t->currency) === $cur));
+        if ($this->isSeatBased && $ladder !== []) {
+            $band = PlanSeatTier::for($ladder, $cur, $seats);
+            return $band === null ? null : (float) $band->price;
+        }
+        $price = null;
+        foreach ($this->prices as $row) {
+            if (strtoupper((string) $row['currency']) === $cur) {
+                $price = $row;
+                break;
+            }
+        }
+        if ($price === null) {
+            return null;
+        }
+        if (!$this->isSeatBased) {
+            return isset($price['amount']) ? (float) $price['amount'] : null;
+        }
+        return (float) ($price['basePrice'] ?? 0)
+            + max($seats - ($this->pricing->includedSeats ?? 0), 0) * (float) ($price['perSeatPrice'] ?? 0);
     }
 }
