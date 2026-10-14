@@ -16,6 +16,12 @@ class PlanPricing
         public readonly ?float $perSeatPrice = null,
         public readonly ?int $minSeats = null,
         public readonly ?int $maxSeats = null,
+        /**
+         * Subscription responses only: the plan's seat bands in the subscription's currency.
+         *
+         * @var PlanSeatTier[]
+         */
+        public readonly array $seatTiers = [],
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -31,6 +37,7 @@ class PlanPricing
             perSeatPrice: isset($data['perSeatPrice']) ? (float) $data['perSeatPrice'] : null,
             minSeats: isset($data['minSeats']) ? (int) $data['minSeats'] : null,
             maxSeats: isset($data['maxSeats']) ? (int) $data['maxSeats'] : null,
+            seatTiers: PlanSeatTier::listFromArray($data['seatTiers'] ?? []),
         );
     }
 }
