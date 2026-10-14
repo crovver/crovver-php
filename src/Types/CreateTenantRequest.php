@@ -6,8 +6,13 @@ namespace Crovver\Types;
 
 class CreateTenantRequest
 {
+    /**
+     * @param ?string $externalTenantId The workspace ID (B2B). Pass null for an individual customer (D2C):
+     *                                  the tenant is keyed on $externalUserId and the field is not sent.
+     * @param ?string $ownerEmail       Also becomes the customer's email in the dashboard when it has none.
+     */
     public function __construct(
-        public readonly string $externalTenantId,
+        public readonly ?string $externalTenantId,
         public readonly string $name,
         public readonly string $externalUserId,
         public readonly ?string $ownerEmail = null,
