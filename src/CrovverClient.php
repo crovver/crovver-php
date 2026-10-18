@@ -11,6 +11,7 @@ use Crovver\Types\BulkAllocateSeatsRequest;
 use Crovver\Types\BulkAllocateSeatsResponse;
 use Crovver\Types\GetAllocationsResponse;
 use Crovver\Types\GetSeatCountResponse;
+use Crovver\Types\RemoveSeatResponse;
 use Crovver\Types\ConsumeResponse;
 use Crovver\Types\CreateCheckoutSessionRequest;
 use Crovver\Types\CreateCheckoutSessionResponse;
@@ -227,6 +228,28 @@ class CrovverClient
     {
         $data = $this->post('/api/public/capacity/count', ['requestingEntityId' => $requestingEntityId], retry: true);
         return GetSeatCountResponse::fromArray($data);
+    }
+
+    /**
+     * Take a user's seat away, at once (e.g. they left the workspace).
+     *
+     * The seat stays on the subscription, vacant, so the next allocation can use it straight
+     * away. Capacity, the payment provider and the price are unchanged: seats are reduced at
+     * renewal, and nothing is refunded. Safe to retry: an already-removed user comes back with
+     * `alreadyRemoved: true`. A user who never had a seat throws a 404 CrovverError.
+     *
+     * ```php
+     * $result = $crovver->removeSeat('company-123', 'user-42');
+     * echo "{$result->vacantSeats} seats free";
+     * ```
+     */
+    public function removeSeat(string $requestingEntityId, string $externalUserId): RemoveSeatResponse
+    {
+        $data = $this->post('/api/public/capacity/remove', [
+            'requestingEntityId' => $requestingEntityId,
+            'externalUserId'     => $externalUserId,
+        ], retry: true);
+        return RemoveSeatResponse::fromArray($data);
     }
 
     // -------------------------------------------------------------------------

@@ -232,6 +232,20 @@ if ($response->requiresPayment) {
 
 ---
 
+### Removing a Seat
+
+When someone leaves the workspace, take their seat away at once. The seat stays on the subscription,
+vacant, so the next person you allocate takes it straight away. Capacity and price do not change until
+renewal, and nothing is refunded. Safe to retry (`alreadyRemoved` is true the second time).
+
+```php
+$result = $client->removeSeat('org_123', 'user_42');
+
+echo "{$result->activeCount} / {$result->capacityUnits} seats used, {$result->vacantSeats} free";
+```
+
+---
+
 ### Payment Providers
 
 ```php

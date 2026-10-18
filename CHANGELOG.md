@@ -18,6 +18,7 @@ The SDK for the revamped Crovver server. Release only after that server release:
 
 ### Added
 
+- `removeSeat($requestingEntityId, $externalUserId)` → `RemoveSeatResponse`: take a user's seat away at once. The seat stays on the subscription, vacant, for the next allocation; capacity and price are unchanged until renewal. `alreadyRemoved` is true on a retry. Needs the server's `POST /api/public/capacity/remove`.
 - Tiered seat plans: `Plan::$seatTiers` and, on subscription responses, `PlanPricing::$seatTiers` (`PlanSeatTier`: `currency`, `minQuantity`, `maxQuantity`, `price`). A band's price is the whole period's price for any seat count in its range; a tiered plan's `basePrice` and `perSeatPrice` are 0.
 - `Plan::periodCharge($seats, $currency)` and `PlanSeatTier::for($tiers, $currency, $seats)`: price a plan at a seat count by the rules Crovver charges, tiered or not.
 
