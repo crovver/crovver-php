@@ -80,14 +80,14 @@ foreach ($response->members as $member) {
     echo $member->externalUserId . ' — ' . $member->role;
     echo $member->email;
 }
-echo $response->organization['type']; // "b2b" or "d2c"
+echo $response->organization['name'];
 ```
 
 **`CreateTenantRequest` parameters:**
 
 | Parameter             | Type           | Required | Description                     |
 | --------------------- | -------------- | -------- | ------------------------------- |
-| `externalTenantId`    | `string`       | Yes      | Your system's tenant identifier |
+| `externalTenantId`    | `string\|null` | Yes      | Your workspace ID (B2B); `null` for an individual (D2C) customer, keyed on `externalUserId` |
 | `name`                | `string`       | Yes      | Display name                    |
 | `externalUserId`      | `string`       | Yes      | Owner's user ID in your system  |
 | `ownerEmail`          | `string\|null` | No       | Owner email                     |
@@ -204,28 +204,6 @@ if ($client->canAccess('org_123', 'export_csv')) {
 }
 ```
 
-#### Metered usage
-
-```php
-// Record usage (defaults to incrementing by 1)
-$client->recordUsage('org_123', 'api_calls');
-$client->recordUsage('org_123', 'api_calls', 10);
-$client->recordUsage('org_123', 'storage_gb', 5, ['source' => 'file_upload']);
-
-// Check against plan limits
-$usage = $client->checkUsageLimit('org_123', 'api_calls');
-
-echo $usage->current;     // current usage count
-echo $usage->limit;       // plan limit (null = unlimited)
-echo $usage->remaining;   // remaining before limit
-echo $usage->percentage;  // 0–100 (null if unlimited)
-echo $usage->allowed;     // false if limit exceeded
-
-if (!$usage->allowed) {
-    // block the action or prompt upgrade
-}
-```
-
 ---
 
 ### Seat-based Proration
@@ -250,6 +228,20 @@ if ($response->requiresPayment) {
     exit;
 }
 // If no payment required, capacity is upgraded immediately
+```
+
+---
+
+### Removing a Seat
+
+When someone leaves the workspace, take their seat away at once. The seat stays on the subscription,
+vacant, so the next person you allocate takes it straight away. Capacity and price do not change until
+renewal, and nothing is refunded. Safe to retry (`alreadyRemoved` is true the second time).
+
+```php
+$result = $client->removeSeat('org_123', 'user_42');
+
+echo "{$result->activeCount} / {$result->capacityUnits} seats used, {$result->vacantSeats} free";
 ```
 
 ---

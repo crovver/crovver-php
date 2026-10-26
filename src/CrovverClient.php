@@ -11,7 +11,7 @@ use Crovver\Types\BulkAllocateSeatsRequest;
 use Crovver\Types\BulkAllocateSeatsResponse;
 use Crovver\Types\GetAllocationsResponse;
 use Crovver\Types\GetSeatCountResponse;
-use Crovver\Types\CheckUsageLimitResponse;
+use Crovver\Types\RemoveSeatResponse;
 use Crovver\Types\ConsumeResponse;
 use Crovver\Types\CreateCheckoutSessionRequest;
 use Crovver\Types\CreateCheckoutSessionResponse;
@@ -24,7 +24,6 @@ use Crovver\Types\GetSubscriptionsResponse;
 use Crovver\Types\ProrationCheckoutResponse;
 use Crovver\Types\GetSupportedProvidersResponse;
 use Crovver\Types\GetTenantResponse;
-use Crovver\Types\RecordUsageResponse;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
@@ -140,50 +139,6 @@ class CrovverClient
         return (bool) ($data['canAccess'] ?? false);
     }
 
-    /**
-     * @deprecated Use getCreditsBalance() / consumeCredits() instead — recordUsage will be removed in a future release.
-     *             The credits system provides idempotency, pool balances, and consumption tracking
-     *             in one unified API. See: $client->consumeCredits(...)
-     *
-     * @param array<string, mixed> $metadata
-     */
-    public function recordUsage(
-        string $requestingEntityId,
-        string $metric,
-        int $value = 1,
-        array $metadata = [],
-        ?string $productSlug = null
-    ): RecordUsageResponse {
-        $body = array_filter([
-            'requestingEntityId' => $requestingEntityId,
-            'metric'             => $metric,
-            'value'              => $value,
-            'metadata'           => $metadata ?: null,
-            'productSlug'        => $productSlug,
-        ], fn($v) => $v !== null);
-
-        $data = $this->post('/api/public/record-usage', $body, retry: true);
-        return RecordUsageResponse::fromArray($data);
-    }
-
-    /**
-     * @deprecated Use getCreditsBalance() instead — checkUsageLimit will be removed in a future release.
-     *             The credits system returns full pool balances with base + addon breakdowns.
-     *             See: $client->getCreditsBalance($externalTenantId)
-     */
-    public function checkUsageLimit(string $requestingEntityId, string $metric, ?string $productSlug = null): CheckUsageLimitResponse
-    {
-        $body = array_filter([
-            'requestingEntityId' => $requestingEntityId,
-            'metric'             => $metric,
-            'productSlug'        => $productSlug,
-        ], fn($v) => $v !== null);
-
-        $data = $this->post('/api/public/check-usage-limit', $body, retry: true);
-
-        return CheckUsageLimitResponse::fromArray($data);
-    }
-
     // -------------------------------------------------------------------------
     // Capacity Allocation
     // -------------------------------------------------------------------------
@@ -275,6 +230,28 @@ class CrovverClient
         return GetSeatCountResponse::fromArray($data);
     }
 
+    /**
+     * Take a user's seat away, at once (e.g. they left the workspace).
+     *
+     * The seat stays on the subscription, vacant, so the next allocation can use it straight
+     * away. Capacity, the payment provider and the price are unchanged: seats are reduced at
+     * renewal, and nothing is refunded. Safe to retry: an already-removed user comes back with
+     * `alreadyRemoved: true`. A user who never had a seat throws a 404 CrovverError.
+     *
+     * ```php
+     * $result = $crovver->removeSeat('company-123', 'user-42');
+     * echo "{$result->vacantSeats} seats free";
+     * ```
+     */
+    public function removeSeat(string $requestingEntityId, string $externalUserId): RemoveSeatResponse
+    {
+        $data = $this->post('/api/public/capacity/remove', [
+            'requestingEntityId' => $requestingEntityId,
+            'externalUserId'     => $externalUserId,
+        ], retry: true);
+        return RemoveSeatResponse::fromArray($data);
+    }
+
     // -------------------------------------------------------------------------
     // Proration
     // -------------------------------------------------------------------------
@@ -311,14 +288,12 @@ class CrovverClient
     }
 
     // -------------------------------------------------------------------------
-    // Credits  (preferred — replaces recordUsage / checkUsageLimit)
+    // Credits
     // -------------------------------------------------------------------------
 
     /**
      * Get credit pool balances for a tenant.
      * Returns all pools (base + addon) with remaining, limit, and expiry info.
-     *
-     * Prefer this over the deprecated checkUsageLimit().
      *
      * @return array<string, mixed>  Keyed by pool_key, each value is a PoolBalance array
      */
@@ -340,8 +315,6 @@ class CrovverClient
     /**
      * Consume credits from a named pool. Idempotent — safe to retry with the
      * same idempotencyKey; the second call returns the original result.
-     *
-     * Prefer this over the deprecated recordUsage().
      *
      * @param array<string, mixed>|null $metadata
      */
